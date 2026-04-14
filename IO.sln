@@ -1,0 +1,58 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.5.11626.173
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6F72D2FC-3AC9-451F-B6B9-907E32B23B5C}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		.github\workflows\dotnet.yml = .github\workflows\dotnet.yml
+		projscan.json = projscan.json
+		README.md = README.md
+		version.json = version.json
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataFac.Compression", "DataFac.Compression\DataFac.Compression.csproj", "{689B8107-F766-9AD5-57A2-244BF54797B7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataFac.Compression.Tests", "DataFac.Compression.Tests\DataFac.Compression.Tests.csproj", "{6520F00F-44C1-4A18-A885-6127AA99B19A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataFac.Hashing", "DataFac.Hashing\DataFac.Hashing.csproj", "{4239026E-1072-461F-9564-374FE5DB2C36}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataFac.MemBlox2", "DataFac.MemBlox2\DataFac.MemBlox2.csproj", "{B1CAFBDB-92D3-4E6C-9A7C-C8543040CC36}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataFac.MemBlox2.Tests", "DataFac.MemBlox2.Tests\DataFac.MemBlox2.Tests.csproj", "{7DECF20E-8A72-4729-A7C1-1571C5903089}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{689B8107-F766-9AD5-57A2-244BF54797B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{689B8107-F766-9AD5-57A2-244BF54797B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{689B8107-F766-9AD5-57A2-244BF54797B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{689B8107-F766-9AD5-57A2-244BF54797B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6520F00F-44C1-4A18-A885-6127AA99B19A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6520F00F-44C1-4A18-A885-6127AA99B19A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6520F00F-44C1-4A18-A885-6127AA99B19A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6520F00F-44C1-4A18-A885-6127AA99B19A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4239026E-1072-461F-9564-374FE5DB2C36}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4239026E-1072-461F-9564-374FE5DB2C36}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4239026E-1072-461F-9564-374FE5DB2C36}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4239026E-1072-461F-9564-374FE5DB2C36}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1CAFBDB-92D3-4E6C-9A7C-C8543040CC36}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1CAFBDB-92D3-4E6C-9A7C-C8543040CC36}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1CAFBDB-92D3-4E6C-9A7C-C8543040CC36}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1CAFBDB-92D3-4E6C-9A7C-C8543040CC36}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7DECF20E-8A72-4729-A7C1-1571C5903089}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7DECF20E-8A72-4729-A7C1-1571C5903089}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7DECF20E-8A72-4729-A7C1-1571C5903089}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7DECF20E-8A72-4729-A7C1-1571C5903089}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2C984986-C2C9-4136-A2D4-1A5FE9BDF8F0}
+	EndGlobalSection
+EndGlobal
