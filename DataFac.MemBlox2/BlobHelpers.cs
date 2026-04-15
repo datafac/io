@@ -6,24 +6,42 @@ namespace DataFac.MemBlox2;
 
 public static class BlobHelpers
 {
-    public static ReadOnlyMemory<byte> ToBlobId(this ReadOnlyMemory<byte> uncompressed)
+    public static (bool embedded, ReadOnlyMemory<byte> compressedData) CompressData(ReadOnlyMemory<byte> uncompressed, Span<byte> idSpan)
     {
-        Memory<byte> idMemory = new byte[BlobIdV1.Size];
         // Snappier compression and hashing
-        // todo inline this and optimise
-        var compressResult1 = SnappyCompressor.CompressData(uncompressed, idMemory.Slice(32, 32).Span, BlobIdV1.MaxEmbeddedSize);
+        var compressResult = SnappyCompressor.CompressData(uncompressed, idSpan.Slice(32, 32), BlobIdV1.MaxEmbeddedSize);
 
         // embed compressed if small engough
-        if (compressResult1.Output.Length <= BlobIdV1.MaxEmbeddedSize)
+        if (compressResult.Output.Length <= BlobIdV1.MaxEmbeddedSize)
         {
-            BlobIdV1.WriteEmbedded(idMemory.Span, compressResult1.CompAlgo, compressResult1.Output);
+            BlobIdV1.WriteEmbedded(idSpan, compressResult.CompAlgo, compressResult.Output);
+            return (true, ReadOnlyMemory<byte>.Empty);
         }
         else
         {
-            BlobIdV1.WriteSansHash(idMemory.Span, compressResult1.InputSize, compressResult1.CompAlgo, BlobHashAlgo.Sha256);
+            BlobIdV1.WriteSansHash(idSpan, compressResult.InputSize, compressResult.CompAlgo, BlobHashAlgo.Sha256);
+            return (false, compressResult.Output);
         }
-        return idMemory;
     }
+
+    public static (bool embedded, ReadOnlyMemory<byte> compressedData) CompressText(string text, Span<byte> idSpan)
+    {
+        // Snappier compression and hashing
+        var compressResult = SnappyCompressor.CompressText(text, idSpan.Slice(32, 32), BlobIdV1.MaxEmbeddedSize);
+
+        // embed compressed if small engough
+        if (compressResult.Output.Length <= BlobIdV1.MaxEmbeddedSize)
+        {
+            BlobIdV1.WriteEmbedded(idSpan, compressResult.CompAlgo, compressResult.Output);
+            return (true, ReadOnlyMemory<byte>.Empty);
+        }
+        else
+        {
+            BlobIdV1.WriteSansHash(idSpan, compressResult.InputSize, compressResult.CompAlgo, BlobHashAlgo.Sha256);
+            return (false, compressResult.Output);
+        }
+    }
+
 
     /// <summary>
     /// todo convert to rom buffers

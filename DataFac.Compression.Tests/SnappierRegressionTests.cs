@@ -1,11 +1,6 @@
 using DataFac.Hashing;
-using DataFac.Memory;
 using Shouldly;
-using Snappier;
 using System;
-using System.Globalization;
-using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VerifyXunit;
