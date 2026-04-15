@@ -6,7 +6,7 @@ namespace DataFac.MemBlox2;
 
 public static class BlobHelpers
 {
-    public static ReadOnlyMemory<byte> ToContentId(this ReadOnlyMemory<byte> uncompressed)
+    public static ReadOnlyMemory<byte> ToBlobId(this ReadOnlyMemory<byte> uncompressed)
     {
         Memory<byte> idMemory = new byte[BlobIdV1.Size];
         // Snappier compression and hashing

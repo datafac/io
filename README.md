@@ -6,6 +6,10 @@
 
 I/O types for protocols, compression, hashing and encryption.
 
+## MemBlox2
+
+MemBlocks V2 blob id format and helpers.
+
 ## How to sponsor
 If you find this package useful, please consider sponsoring my work on GitHub 
 at https://github.com/sponsors/Psiman62

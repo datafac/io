@@ -8,9 +8,3 @@ public interface IBlobHasher
     static abstract void ComputeHash(ReadOnlySpan<byte> data, Span<byte> hashOutput);
 #endif
 }
-
-public enum BlobHashAlgo : byte
-{
-    None = 0,
-    Sha256 = 1,
-}

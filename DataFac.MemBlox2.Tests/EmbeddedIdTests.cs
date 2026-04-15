@@ -15,7 +15,7 @@ public class EmbeddedIdTests
     public void Embedded01_IdFromEmptyBlob()
     {
         var data = ReadOnlyMemory<byte>.Empty;
-        var id = BlobIdV1.FromSpan(data.ToContentId().Span);
+        var id = BlobIdV1.FromSpan(data.ToBlobId().Span);
         id.IsEmbedded.ShouldBeTrue();
         id.HashAlgo.ShouldBe(BlobHashAlgo.None);
         id.CompAlgo.ShouldBe(BlobCompAlgo.UnComp);
@@ -26,7 +26,7 @@ public class EmbeddedIdTests
     public async Task Embedded02_IdFromEmptyText()
     {
         var data = new ReadOnlyMemory<byte>(Encoding.UTF8.GetBytes(string.Empty));
-        var id = BlobIdV1.FromSpan(data.ToContentId().Span);
+        var id = BlobIdV1.FromSpan(data.ToBlobId().Span);
         id.IsEmbedded.ShouldBeTrue();
         id.CompAlgo.ShouldBe(BlobCompAlgo.UnComp);
         id.HashAlgo.ShouldBe(BlobHashAlgo.None);
@@ -37,7 +37,7 @@ public class EmbeddedIdTests
     public async Task Embedded03_IdFromNonEmptyBlob()
     {
         var data = new ReadOnlyMemory<byte>(Enumerable.Range(0, 62).Select(i => (byte)i).ToArray());
-        var id = BlobIdV1.FromSpan(data.ToContentId().Span);
+        var id = BlobIdV1.FromSpan(data.ToBlobId().Span);
         id.IsEmbedded.ShouldBeTrue();
         id.CompAlgo.ShouldBe(BlobCompAlgo.UnComp);
         id.HashAlgo.ShouldBe(BlobHashAlgo.None);
@@ -48,7 +48,7 @@ public class EmbeddedIdTests
     public async Task Embedded04_IdFromNonEmptyText()
     {
         var data = new ReadOnlyMemory<byte>(Encoding.UTF8.GetBytes(new string('Z', 100)));
-        var id = BlobIdV1.FromSpan(data.ToContentId().Span);
+        var id = BlobIdV1.FromSpan(data.ToBlobId().Span);
         id.IsEmbedded.ShouldBeTrue();
         id.CompAlgo.ShouldBe(BlobCompAlgo.Snappy);
         id.HashAlgo.ShouldBe(BlobHashAlgo.None);

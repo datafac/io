@@ -24,11 +24,9 @@ public sealed class SHA256Hasher : IBlobHasher
 #else
     public static void ComputeHash(ReadOnlySpan<byte> data, Span<byte> hashOutput)
     {
-        // incremental hasher for SHA-256
-        using var hasher = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-        hasher.AppendData(data.ToArray());
-        byte[] hashBytes = hasher.GetHashAndReset();
-        hashBytes.CopyTo(hashOutput);
+        using var hashAlgo = SHA256.Create();
+        var hash = hashAlgo.ComputeHash(data.ToArray());
+        hash.CopyTo(hashOutput);
     }
 #endif
 }
