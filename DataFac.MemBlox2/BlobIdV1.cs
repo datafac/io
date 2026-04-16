@@ -5,11 +5,13 @@ using DataFac.UnsafeHelpers;
 using System;
 using System.Buffers.Binary;
 using System.IO;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace DataFac.MemBlox2;
 
-public readonly struct BlobIdV1 : IEquatable<BlobIdV1>
+public static class BlobIdV1
 {
     public const int Size = 64;
     public const int MaxEmbeddedSize = Size - 2; // 62 bytes for embedded data, 2 bytes for marker and length
@@ -17,83 +19,31 @@ public readonly struct BlobIdV1 : IEquatable<BlobIdV1>
     public const int HashOffset = 32;
     public const int HashLength = 32;
 
-    private readonly BlockB064 _block;
-    public BlockB064 Block => _block;
-
     // map
     //  offset  path        len fieldname
-    //  00      A.A.A.A.A.A 1   Marker00 '|' for non-embedded or compAlgo char code if embedded
-    //  01      A.A.A.A.A.B 1   Marker01 '_' for non-embedded or data length if embedded
-    //  02      A.A.A.A.B.A 1   MajorVer
-    //  03      A.A.A.A.B.B 1   MinorVer
-    //  04      A.A.A.B.A.A 1   CompAlgo
-    //  05      A.A.A.B.A.B 1   HashAlgo
-    //  06-07   A.A.A.B.B   2   -unused-
-    //  08-0B   A.A.B.A     4   BlobSize
-    //  0C-0F   A.A.B.B     4   -unused-
+    //  00      A.A.A.A.A.A  1  Marker00 '|' for non-embedded or compAlgo char code if embedded
+    //  01      A.A.A.A.A.B  1  Marker01 '_' for non-embedded or data length if embedded
+    //  02      A.A.A.A.B.A  1  MajorVer
+    //  03      A.A.A.A.B.B  1  MinorVer
+    //  04      A.A.A.B.A.A  1  CompAlgo
+    //  05      A.A.A.B.A.B  1  HashAlgo
+    //  06-07   A.A.A.B.B    2  -unused-
+    //  08-0B   A.A.B.A      4  BlobSize
+    //  0C-0F   A.A.B.B      4  -unused-
     //  10-1F   A.B         16  -unused-
     //  20-3F   B           32  HashData
-    public byte Marker00 => _block.A.A.A.A.A.A.ByteValue; // _memory.Span[0];
-    public byte Marker01 => _block.A.A.A.A.A.B.ByteValue; // _memory.Span[1];
-    public byte MajorVer => _block.A.A.A.A.B.A.ByteValue; // _memory.Span[2];
-    public byte MinorVer => _block.A.A.A.A.B.B.ByteValue; // _memory.Span[3];
-    public BlobCompAlgo CompAlgo
+
+    //---------- static methods ------------------------------------------------------------
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ThrowBufferWrongSize(string paramName, int requiredSize)
     {
-        get
-        {
-            return IsEmbedded
-                ? _block.A.A.A.A.A.A.ByteValue.ToCompAlgo()     // _memory.Span[0];
-                : (BlobCompAlgo)_block.A.A.A.B.A.A.ByteValue;   // _memory.Span[4];
-        }
-    }
-
-    public BlobHashAlgo HashAlgo
-    {
-        get
-        {
-            return IsEmbedded
-                ? BlobHashAlgo.None // embedded blobs do not have hash algo, as they are small enough to be stored directly
-                : (BlobHashAlgo)_block.A.A.A.B.A.B.ByteValue;   // _memory.Span[5];
-        }
-    }
-
-    public int BlobSize => _block.A.A.B.A.Int32ValueLE; // Codec_Int32_LE.ReadFromSpan(_memory.Span.Slice(8, 4));
-    public BlockB032 HashData => _block.B; // _memory.Slice(32, 32);
-
-    public bool IsDefault => _block.IsEmpty;
-
-    private BlobIdV1(ReadOnlySpan<byte> source)
-    {
-        if (source.Length != BlobIdV1.Size) throw new ArgumentException($"Length must be {BlobIdV1.Size}.", nameof(source));
-        _block.TryRead(source);
-    }
-
-    private BlobIdV1(BlockB064 source)
-    {
-        _block = source;
-    }
-
-    public static BlobIdV1 FromSpan(ReadOnlySpan<byte> source) => new BlobIdV1(source);
-
-    public static BlobIdV1 FromBlock(BlockB064 source) => new BlobIdV1(source);
-
-    /// <summary>
-    /// Used to directly embed blob data which is small enough into the id.
-    /// </summary>
-    /// <param name="compAlgo"></param>
-    /// <param name="data"></param>
-    /// <exception cref="ArgumentException"></exception>
-    public BlobIdV1(BlobCompAlgo compAlgo, ReadOnlyMemory<byte> data)
-    {
-        if (data.Length > MaxEmbeddedSize) throw new ArgumentException("Length must be <= 62", nameof(data));
-        _block.A.A.A.A.A.A.ByteValue = compAlgo.ToCharCode();
-        _block.A.A.A.A.A.B.ByteValue = (byte)(data.Length + (byte)'A');
-        data.Span.CopyTo(BlockHelper.AsWritableSpan(ref _block).Slice(2));
+        throw new ArgumentException($"Length must be {requiredSize} bytes", paramName);
     }
 
     public static void WriteEmbedded(Span<byte> target, BlobCompAlgo compAlgo, ReadOnlyMemory<byte> data)
     {
-        if (target.Length != Size) throw new ArgumentException($"Length must be {Size}.", nameof(target));
+        if (target.Length != Size) ThrowBufferWrongSize(nameof(target), Size);
         if (data.Length > MaxEmbeddedSize) throw new ArgumentException("Length must be <= 62", nameof(data));
         target.Clear();
         target[0] = compAlgo.ToCharCode();
@@ -101,36 +51,7 @@ public readonly struct BlobIdV1 : IEquatable<BlobIdV1>
         data.Span.CopyTo(target.Slice(2));
     }
 
-    /// <summary>
-    /// Used to directly embed blob data which is small enough into the id.
-    /// </summary>
-    /// <param name="compAlgo"></param>
-    /// <param name="data"></param>
-    /// <exception cref="ArgumentException"></exception>
-    public BlobIdV1(BlobCompAlgo compAlgo, ReadOnlySpan<byte> data)
-    {
-        if (data.Length > MaxEmbeddedSize) throw new ArgumentException("Length must be <= 62", nameof(data));
-        _block.A.A.A.A.A.A.ByteValue = compAlgo.ToCharCode();
-        _block.A.A.A.A.A.B.ByteValue = (byte)(data.Length + (byte)'A');
-        data.CopyTo(BlockHelper.AsWritableSpan(ref _block).Slice(2));
-    }
-
-    private BlobIdV1(byte majorVer, byte minorVer, int blobSize, BlobCompAlgo compAlgo, BlobHashAlgo hashAlgo, ReadOnlySpan<byte> hashData)
-    {
-        if (hashData.Length != BlobIdV1.HashLength) throw new ArgumentException("Length must be == 32", nameof(hashData));
-        _block.A.A.A.A.A.A.ByteValue = (byte)'|';   // Marker00
-        _block.A.A.A.A.A.B.ByteValue = (byte)'_';   // Marker01
-        _block.A.A.A.A.B.A.ByteValue = majorVer;
-        _block.A.A.A.A.B.B.ByteValue = minorVer;
-        _block.A.A.A.B.A.A.ByteValue = (byte)compAlgo;
-        _block.A.A.A.B.A.B.ByteValue = (byte)hashAlgo;
-        _block.A.A.B.A.Int32ValueLE = blobSize;
-        hashData.CopyTo(BlockHelper.AsWritableSpan(ref _block).Slice(32, 32));
-    }
-
-    public BlobIdV1(int blobSize, BlobCompAlgo compAlgo, BlobHashAlgo hashAlgo, ReadOnlySpan<byte> hashData)
-        : this(1, 0, blobSize, compAlgo, hashAlgo, hashData) { }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void WriteHeadPart(Span<byte> target, int blobSize, BlobCompAlgo compAlgo, BlobHashAlgo hashAlgo)
     {
         target[0] = (byte)'|';   // Marker00
@@ -141,143 +62,113 @@ public readonly struct BlobIdV1 : IEquatable<BlobIdV1>
         target[5] = (byte)hashAlgo;
         BinaryPrimitives.WriteInt32LittleEndian(target.Slice(8, 4), blobSize);
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Write(Span<byte> target, int blobSize, BlobCompAlgo compAlgo, BlobHashAlgo hashAlgo, ReadOnlySpan<byte> hashData)
     {
-        if (target.Length != Size) throw new ArgumentException($"Length must be {Size}.", nameof(target));
-        if (hashData.Length != 32) throw new ArgumentException("Length must be == 32", nameof(hashData));
+        if (target.Length != Size) ThrowBufferWrongSize(nameof(target), Size);
+        if (hashData.Length != 32) ThrowBufferWrongSize(nameof(hashData), 32); throw new ArgumentException("Length must be == 32", nameof(hashData));
         target.Clear();
         WriteHeadPart(target, blobSize, compAlgo, hashAlgo);
         hashData.CopyTo(target.Slice(32, 32));
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteSansHash(Span<byte> target, int blobSize, BlobCompAlgo compAlgo, BlobHashAlgo hashAlgo)
     {
-        if (target.Length != Size) throw new ArgumentException($"Length must be {Size}.", nameof(target));
+        if (target.Length != Size) ThrowBufferWrongSize(nameof(target), Size);
         var header = target.Slice(0, 32); // header is the first 32 bytes, hash data is the last 32 bytes
         header.Clear();
         WriteHeadPart(header, blobSize, compAlgo, hashAlgo);
     }
-    public void WriteTo(Span<byte> target) => _block.TryWrite(target);
 
-    public byte[] ToByteArray() => _block.ToByteArray();
-
-    public bool IsEmbedded => (Marker00 != 0) && Marker00 != (byte)'|';
-
-    public bool TryGetEmbeddedBlob(out ReadOnlyMemory<byte> embedded)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsDefaultSpan(ReadOnlySpan<byte> byteSpan)
     {
-        embedded = ReadOnlyMemory<byte>.Empty;
-        if (!IsEmbedded) return false;
-        switch (Marker00.ToCompAlgo())
+        ReadOnlySpan<long> longSpan = MemoryMarshal.Cast<byte, long>(byteSpan);
+        int byteIndex = 0;
+        // compare 8 bytes at a time for better performance
+        for (int longIndex = 0; longIndex < longSpan.Length; longIndex++)
         {
-            case BlobCompAlgo.UnComp:
-                int dataSize0 = Marker01 - (byte)'A';
-                embedded = new ReadOnlyMemory<byte>(_block.ToByteArray(2, dataSize0));
-                return true;
-            case BlobCompAlgo.Brotli:
-                throw new NotImplementedException("Brotli embedded blobs are not implemented yet.");
-            case BlobCompAlgo.Snappy:
-                int dataSize2 = Marker01 - (byte)'A';
-                var compressedData = new ReadOnlyMemory<byte>(_block.ToByteArray(2, dataSize2));
-                embedded = SnappyCompressor.Decompress(compressedData);
-                return true;
-            default:
-                return false;
+            if (longSpan[longIndex] != 0) return false;
+            byteIndex += sizeof(long);
         }
+        // compare remaining bytes
+        for (; byteIndex < byteSpan.Length; byteIndex++)
+        {
+            if (byteSpan[byteIndex] != 0) return false;
+        }
+        return true;
     }
 
-    /// <summary>
-    /// Formats the blob id as a round-trip string.
-    /// </summary>
-    /// <returns></returns>
-    public override string ToString()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static (bool embedded, ReadOnlyMemory<byte>? data) TryReadEmbedded(ReadOnlyMemory<byte> source)
     {
-        if (IsDefault) return string.Empty;
-        StringBuilder result = new StringBuilder();
-        if (IsEmbedded)
+        if (source.Length != Size) ThrowBufferWrongSize(nameof(source), Size);
+        var sourceSpan = source.Span;
+        if (IsDefaultSpan(sourceSpan)) return (true, null);
+        var compAlgo = sourceSpan[0].ToCompAlgo();
+        int embeddedSize = sourceSpan[1] - (byte)'A';
+        return compAlgo switch
         {
-            char marker = (char)Marker00;
-            int dataSize = Marker01 - (byte)'A';
+            BlobCompAlgo.UnComp => (true, source.Slice(2, embeddedSize)),
+            BlobCompAlgo.Snappy => (true, SnappyCompressor.Decompress(source.Slice(2, embeddedSize))),
+            _ => (false, null),
+        };
+    }
+
+    public static (byte majorVer, byte minorVer, BlobCompAlgo compAlgo, BlobHashAlgo hashAlgo, int uncompressedSize) ReadNonEmbedded(ReadOnlySpan<byte> source)
+    {
+        if (source.Length != Size) ThrowBufferWrongSize(nameof(source), Size);
+        // ignore empty and embedded formats
+        if (IsDefaultSpan(source)) return (default, default, default, default, 0);
+        if ((source[0] != 0) && source[1] != (byte)'|') return (default, default, default, default, 0);
+
+        // non-embedded format
+        int blobSize = BinaryPrimitives.ReadInt32LittleEndian(source.Slice(8, 4));
+        return (
+            source[2],  // major version
+            source[3],  // minor version
+            (BlobCompAlgo)source[4], 
+            (BlobHashAlgo)source[5], 
+            blobSize);
+    }
+
+    public static string ToDisplayString(ReadOnlySpan<byte> source)
+    {
+        if (source.Length != Size) return $"{nameof(source)} is not a valid V1 BlobId - length must be {Size} bytes.";
+        if (IsDefaultSpan(source)) return string.Empty;
+        StringBuilder result = new StringBuilder();
+        byte marker00 = source[0];
+        byte marker01 = source[1];
+        if ((marker00 != 0) && marker00 != (byte)'|')
+        {
+            char marker = (char)marker00;
+            int dataSize = marker01 - (byte)'A';
             result.Append(marker);
             result.Append(':');
             result.Append(dataSize);
             result.Append(':');
-            result.Append(_block.ToBase64String(2, dataSize));
+            result.Append(Convert.ToBase64String(source.Slice(2, dataSize).ToArray()));
             return result.ToString();
         }
 
-        result.Append($"V{MajorVer}.{MinorVer}:");
-        result.Append(BlobSize);
+        byte majorVer = source[2];
+        byte minorVer = source[3];
+        var compAlgo = (BlobCompAlgo)source[4];
+        var hashAlgo = (BlobHashAlgo)source[5];
+        int blobSize = BinaryPrimitives.ReadInt32LittleEndian(source.Slice(8, 4));
+        result.Append($"V{majorVer}.{minorVer}:");
+        result.Append(blobSize);
         result.Append(':');
-        result.Append((char)CompAlgo.ToCharCode());
+        result.Append((char)compAlgo.ToCharCode());
         result.Append(':');
-        result.Append((int)HashAlgo);
+        result.Append((char)hashAlgo.ToCharCode());
         result.Append(':');
-        if (HashAlgo != BlobHashAlgo.None)
+        if (hashAlgo != BlobHashAlgo.None)
         {
-            result.Append(_block.ToBase64String(32, 32));
+            result.Append(Convert.ToBase64String(source.Slice(32, 32).ToArray()));
         }
         return result.ToString();
     }
-
-    /// <summary>
-    /// Parses a formatted string to a blob id.
-    /// </summary>
-    /// <param name="source"></param>
-    /// <returns></returns>
-    /// <exception cref="InvalidDataException"></exception>
-    public static BlobIdV1 FromString(string source)
-    {
-        if (string.IsNullOrEmpty(source)) return default;
-        var sourceSpan = source.AsSpan();
-        int partId = 0;
-        int blobSize = default;
-        int compAlgoInt = default;
-        var compAlgo = BlobCompAlgo.UnComp;
-        int hashAlgoInt = default;
-        var hashAlgo = BlobHashAlgo.None;
-        Span<byte> hashSpan = stackalloc byte[32];
-        while (sourceSpan.Length > 0)
-        {
-            var sourceIndex = sourceSpan.IndexOf(':');
-            ReadOnlySpan<char> partSpan = sourceIndex >= 0 ? sourceSpan.Slice(0, sourceIndex) : sourceSpan;
-            string part = partSpan.ToString();
-            switch (partId)
-            {
-                case 0: // header
-                    if (part != "V1.0") throw new InvalidDataException($"Invalid version: '{part}'.");
-                    break;
-                case 1:
-                    if (!int.TryParse(part, out blobSize)) throw new InvalidDataException($"Invalid blobSize: '{part}'.");
-                    break;
-                case 2:
-                    if (!int.TryParse(part, out compAlgoInt)) throw new InvalidDataException($"Invalid compAlgo: '{part}'.");
-                    compAlgo = (BlobCompAlgo)compAlgoInt;
-                    break;
-                case 3:
-                    if (!int.TryParse(part, out hashAlgoInt)) throw new InvalidDataException($"Invalid hashAlgo: '{part}'.");
-                    hashAlgo = (BlobHashAlgo)hashAlgoInt;
-                    break;
-                case 4:
-#if NET8_0_OR_GREATER
-                        if (!Convert.TryFromBase64Chars(partSpan, hashSpan, out int bytesDecoded) || bytesDecoded != 32) throw new InvalidDataException($"Invalid hashData: '{part}'.");
-#else
-                    byte[] hashBytes = Convert.FromBase64String(part);
-                    hashBytes.CopyTo(hashSpan);
-#endif
-                    break;
-                default:
-                    throw new InvalidDataException($"Unexpected format: '{source}'");
-            }
-            // next
-            partId++;
-            sourceSpan = sourceIndex >= 0 ? sourceSpan.Slice(sourceIndex + 1) : default;
-        }
-        return new BlobIdV1(blobSize, compAlgo, hashAlgo, hashSpan);
-    }
-
-    public bool Equals(BlobIdV1 that) => _block.Equals(that._block);
-    public override bool Equals(object? obj) => obj is BlobIdV1 other && Equals(other);
-    public override int GetHashCode() => _block.GetHashCode();
-
-    public static bool operator ==(BlobIdV1 left, BlobIdV1 right) => left.Equals(right);
-    public static bool operator !=(BlobIdV1 left, BlobIdV1 right) => !left.Equals(right);
 }

@@ -9,9 +9,18 @@ namespace DataFac.Compression;
 
 public sealed class SnappyCompressor : IBlobCompressor
 {
-    public static ReadOnlyMemory<byte> Decompress(ReadOnlyMemory<byte> compressedData)
+    public static ReadOnlyMemory<byte> Decompress(ReadOnlyMemory<byte> compressed)
     {
-        ReadOnlySequence<byte> inputSequence = new ReadOnlySequence<byte>(compressedData);
+        int uncompressedSize = Snappy.GetUncompressedLength(compressed.Span);
+        if (uncompressedSize <= 1024)
+        {
+            Span<byte> outputSpan = stackalloc byte[uncompressedSize];
+            int bytesWritten = Snappy.Decompress(compressed.Span, outputSpan);
+            return outputSpan.Slice(0, bytesWritten).ToArray();
+        }
+
+        // too large for stack allocation, use heap allocation
+        var inputSequence = new ReadOnlySequence<byte>(compressed);
         var buffers = new ByteBufferWriter();
         Snappy.Decompress(inputSequence, buffers);
         var decompressedData = buffers.GetWrittenSequence();

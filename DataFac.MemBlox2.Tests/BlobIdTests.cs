@@ -8,30 +8,17 @@ namespace DataFac.MemBlox2.Tests;
 public class BlobIdTests
 {
     [Fact]
-    public void BlobId01CreateDefault()
-    {
-        BlobIdV1 id = default;
-        id.IsDefault.ShouldBeTrue();
-        id.ToString().ShouldBe("");
-    }
-
-    [Fact]
     public void BlobId02CreateWithZeroData()
     {
         ReadOnlySpan<byte> input = stackalloc byte[BlobIdV1.Size];
-        BlobIdV1 id = BlobIdV1.FromSpan(input);
-        id.IsDefault.ShouldBeTrue();
-        id.ToString().ShouldBe("");
-        id.Equals(default).ShouldBeTrue();
+        BlobIdV1.ToDisplayString(input).ShouldBe("");
     }
 
     [Fact]
     public void BlobId03CreateWithInvalidData()
     {
-        ReadOnlyMemory<byte> input = Enumerable.Range(0, BlobIdV1.Size).Select(i => (byte)i).ToArray();
-        BlobIdV1 id = BlobIdV1.FromSpan(input.Span);
-        id.IsDefault.ShouldBeFalse();
-        id.ToString().ShouldBe("V2.3:185207048:U:5:ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=");
+        ReadOnlySpan<byte> input = Enumerable.Range(0, BlobIdV1.Size).Select(i => (byte)i).ToArray();
+        BlobIdV1.ToDisplayString(input).ShouldBe("V2.3:185207048:U:N:ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=");
     }
 
     [Fact]
@@ -43,26 +30,9 @@ public class BlobIdTests
             "40-AF-F2-E9-D2-D8-92-2E-47-AF-D4-64-8E-69-67-49-" +
             "71-58-78-5F-BD-1D-A8-70-E7-11-02-66-BF-94-48-80";
 
-        ReadOnlyMemory<byte> input = inputStr.Split('-').Select(s => (byte)int.Parse(s, System.Globalization.NumberStyles.HexNumber)).ToArray();
-        BlobIdV1 id = BlobIdV1.FromSpan(input.Span);
-        id.IsDefault.ShouldBeFalse();
-        id.ToString().ShouldBe("V1.0:256:U:1:QK/y6dLYki5Hr9RkjmlnSXFYeF+9Hahw5xECZr+USIA=");
-
-        string.Join("-", id.ToByteArray().Select(b => b.ToString("X2"))).ShouldBe(inputStr);
+        ReadOnlySpan<byte> input = inputStr.Split('-').Select(s => (byte)int.Parse(s, System.Globalization.NumberStyles.HexNumber)).ToArray();
+        BlobIdV1.ToDisplayString(input).ShouldBe("V1.0:256:U:S:QK/y6dLYki5Hr9RkjmlnSXFYeF+9Hahw5xECZr+USIA=");
     }
-
-    //todo
-    //[Fact]
-    //public void BlobId06CreateFromCopy()
-    //{
-    //    var data = new ReadOnlyMemory<byte>(Enumerable.Range(0, 256).Select(i => (byte)i).ToArray());
-    //    var result = data.TryCompressBlob();
-    //    BlobIdV1 orig = result.BlobId;
-    //    BlobIdV1 copy = orig;
-    //    copy.Equals(orig).ShouldBeTrue();
-    //    copy.ShouldBe(orig);
-    //    copy.GetHashCode().ShouldBe(orig.GetHashCode());
-    //}
 
     [Fact]
     public void BlobId07CreateFails()
@@ -70,9 +40,9 @@ public class BlobIdTests
         var ex = Assert.ThrowsAny<ArgumentException>(() =>
         {
             ReadOnlySpan<byte> input = stackalloc byte[10];
-            BlobIdV1 id = BlobIdV1.FromSpan(input);
+            BlobIdV1.ReadNonEmbedded(input);
         });
-        ex.Message.ShouldStartWith("Length must be 64.");
+        ex.Message.ShouldStartWith("Length must be 64 bytes");
     }
 
 }
