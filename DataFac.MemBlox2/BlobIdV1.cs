@@ -122,7 +122,7 @@ public static class BlobIdV1
         if (source.Length != Size) ThrowBufferWrongSize(nameof(source), Size);
         // ignore empty and embedded formats
         if (IsDefaultSpan(source)) return (default, default, default, default, 0);
-        if ((source[0] != 0) && source[1] != (byte)'|') return (default, default, default, default, 0);
+        if ((source[0] != (byte)'|') || source[1] != (byte)'_') return (default, default, default, default, 0);
 
         // non-embedded format
         int blobSize = BinaryPrimitives.ReadInt32LittleEndian(source.Slice(8, 4));
