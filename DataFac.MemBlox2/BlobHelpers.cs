@@ -42,9 +42,9 @@ public static class BlobHelpers
         }
     }
 
-    public static (bool embedded, ReadOnlyMemory<byte>? decompressed) TryGetEmbedded(ReadOnlyMemory<byte> idMemory)
+    public static (bool embedded, ReadOnlyMemory<byte>? decompressed) TryGetEmbedded(ReadOnlySpan<byte> blobId)
     {
-        return BlobIdV1.TryReadEmbedded(idMemory);
+        return BlobIdV1.TryReadEmbedded(blobId);
     }
 
     public static ReadOnlyMemory<byte> DecompressData(ReadOnlySpan<byte> idSpan, ReadOnlyMemory<byte> blobData)
@@ -55,7 +55,7 @@ public static class BlobHelpers
             case BlobCompAlgo.UnComp:
                 return blobData;
             case BlobCompAlgo.Snappy:
-                return SnappyCompressor.Decompress(blobData);
+                return SnappyCompressor.Decompress(blobData.Span);
             default:
                 throw new NotSupportedException($"Compression algorithm {compAlgo} not supported.");
         }

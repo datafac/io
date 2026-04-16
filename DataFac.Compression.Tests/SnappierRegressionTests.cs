@@ -68,7 +68,7 @@ public class SnappierRegressionTests
         compressResult.CompAlgo.ShouldBe(BlobCompAlgo.Snappy);
         compressResult.HashAlgo.ShouldBe(BlobHashAlgo.Sha256);
         // check decompressed
-        var copy = SnappyCompressor.Decompress(compressResult.Output);
+        var copy = SnappyCompressor.Decompress(compressResult.Output.Span);
         copy.ToArray().ShouldBeEquivalentTo(data.ToArray());
         // check regression
         string display = compressResult.Output.ToDisplayString();
@@ -98,7 +98,7 @@ public class SnappierRegressionTests
         compressResult.CompAlgo.ShouldBe(BlobCompAlgo.Snappy);
         compressResult.HashAlgo.ShouldBe(BlobHashAlgo.Sha256);
         // check decompressed
-        var copy = SnappyCompressor.Decompress(compressResult.Output);
+        var copy = SnappyCompressor.Decompress(compressResult.Output.Span);
         copy.ToArray().ShouldBeEquivalentTo(data.ToArray());
         // check regression
         string display = compressResult.Output.ToDisplayString();
@@ -130,10 +130,10 @@ public class SnappierRegressionTests
             72-61-69-6E-20-64-72-61-69-6E-2E-22-3B-00
             """;
 
-        var net48Copy = SnappyCompressor.Decompress(net48Compressed.FromDisplayString());
+        var net48Copy = SnappyCompressor.Decompress(net48Compressed.FromDisplayString().Span);
         net48Copy.ToArray().ShouldBeEquivalentTo(data.ToArray());
 
-        var net80Copy = SnappyCompressor.Decompress(net80Compressed.FromDisplayString());
+        var net80Copy = SnappyCompressor.Decompress(net80Compressed.FromDisplayString().Span);
         net80Copy.ToArray().ShouldBeEquivalentTo(data.ToArray());
     }
 }

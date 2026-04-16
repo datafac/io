@@ -9,22 +9,24 @@ namespace DataFac.Compression;
 
 public sealed class SnappyCompressor : IBlobCompressor
 {
-    public static ReadOnlyMemory<byte> Decompress(ReadOnlyMemory<byte> compressed)
+    private const int MaxStackAllocSize = 1024; // threshold for stack allocation
+
+    public static ReadOnlyMemory<byte> Decompress(ReadOnlySpan<byte> compressed)
     {
-        int uncompressedSize = Snappy.GetUncompressedLength(compressed.Span);
-        if (uncompressedSize <= 1024)
+        int uncompressedSize = Snappy.GetUncompressedLength(compressed);
+        if (uncompressedSize <= MaxStackAllocSize)
         {
             Span<byte> outputSpan = stackalloc byte[uncompressedSize];
-            int bytesWritten = Snappy.Decompress(compressed.Span, outputSpan);
+            int bytesWritten = Snappy.Decompress(compressed, outputSpan);
             return outputSpan.Slice(0, bytesWritten).ToArray();
         }
-
-        // too large for stack allocation, use heap allocation
-        var inputSequence = new ReadOnlySequence<byte>(compressed);
-        var buffers = new ByteBufferWriter();
-        Snappy.Decompress(inputSequence, buffers);
-        var decompressedData = buffers.GetWrittenSequence();
-        return decompressedData.Compact();
+        else
+        {
+            // too large for stack allocation, use heap allocation
+            Span<byte> outputSpan = new byte[uncompressedSize];
+            int bytesWritten = Snappy.Decompress(compressed, outputSpan);
+            return outputSpan.Slice(0, bytesWritten).ToArray();
+        }
     }
 
     public static CompressResult CompressData(ReadOnlyMemory<byte> data, Span<byte> hashSpan, int maxEmbeddedSize)
@@ -37,7 +39,7 @@ public sealed class SnappyCompressor : IBlobCompressor
             return new CompressResult(data.Length, BlobHashAlgo.None, BlobCompAlgo.UnComp, data);
         }
         SHA256Hasher.ComputeHash(data.Span, hashSpan);
-        if (data.Length < 1024)
+        if (data.Length < MaxStackAllocSize)
         {
             Span<byte> outputSpan = stackalloc byte[data.Span.Length + 128];
             if (Snappy.TryCompress(data.Span, outputSpan, out int bytesWritten))
@@ -64,10 +66,10 @@ public sealed class SnappyCompressor : IBlobCompressor
         if (hashSpan.Length != 32) throw new ArgumentException("Length must be 32 bytes for SHA256", nameof(hashSpan));
         // compress using stack allocation only for small strings, otherwise use heap allocation
         //int estimatedSize = Encoding.UTF8.GetByteCount(text);
-        if (text.Length < 1024)
+        if (text.Length < MaxStackAllocSize)
         {
 #if NET8_0_OR_GREATER
-            Span<byte> localBuffer = stackalloc byte[1024];
+            Span<byte> localBuffer = stackalloc byte[MaxStackAllocSize];
             if (Encoding.UTF8.TryGetBytes(text, localBuffer, out int bytesEncoded))
             {
                 var inputSpan = localBuffer.Slice(0, bytesEncoded);
