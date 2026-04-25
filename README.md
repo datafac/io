@@ -6,9 +6,11 @@
 
 I/O types for protocols, compression, hashing and encryption.
 
-## MemBlox2
+## Compression Helpers
+- Snappier
 
-MemBlocks V2 blob id format and helpers.
+## Hashing Helpers
+- SHA256
 
 ## How to sponsor
 If you find this package useful, please consider sponsoring my work on GitHub 
