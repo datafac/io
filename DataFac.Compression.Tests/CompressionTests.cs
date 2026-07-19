@@ -1,7 +1,10 @@
 using DataFac.Memory;
+using PublicApiGenerator;
 using Shouldly;
 using Snappier;
 using System.Text;
+using System.Threading.Tasks;
+using VerifyXunit;
 using Xunit;
 
 namespace DataFac.Compression.Tests;
@@ -61,4 +64,34 @@ public class CompressionTests
         var decompressed = Octets.Wrap(decompressionBuffers.GetWrittenSequence());
         decompressed.Equals(originalData).ShouldBeTrue();
     }
+}
+
+public class PublicApiRegressionTests
+{
+    [Fact]
+    public async Task CheckVerifySetup()
+    {
+        await VerifyChecks.Run();
+    }
+
+    [Fact]
+    public void VersionCheck()
+    {
+        typeof(BlobCompAlgo).Assembly.GetName().Version?.ToString().ShouldBe("1.1.0.0");
+    }
+
+    [Fact]
+    public async Task CheckPublicApi()
+    {
+        // act
+        var options = new ApiGeneratorOptions()
+        {
+            IncludeAssemblyAttributes = false
+        };
+        string currentApi = ApiGenerator.GeneratePublicApi(typeof(BlobCompAlgo).Assembly, options);
+
+        // assert
+        await Verifier.Verify(currentApi);
+    }
+
 }

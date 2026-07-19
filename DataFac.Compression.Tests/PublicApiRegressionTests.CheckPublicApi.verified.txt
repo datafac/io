@@ -1,0 +1,35 @@
+﻿namespace DataFac.Compression
+{
+    public enum BlobCompAlgo : byte
+    {
+        UnComp = 0,
+        Brotli = 1,
+        Snappy = 2,
+    }
+    public readonly struct CompressResult
+    {
+        public readonly DataFac.Compression.BlobCompAlgo CompAlgo;
+        public readonly DataFac.Hashing.BlobHashAlgo HashAlgo;
+        public readonly int InputSize;
+        public readonly System.ReadOnlyMemory<byte> Output;
+        public CompressResult(int inputSize, DataFac.Hashing.BlobHashAlgo hashAlgo, DataFac.Compression.BlobCompAlgo compAlgo, System.ReadOnlyMemory<byte> output) { }
+    }
+    public static class CompressionHelpers
+    {
+        public static byte ToCharCode(this DataFac.Compression.BlobCompAlgo algo) { }
+        public static DataFac.Compression.BlobCompAlgo ToCompAlgo(this byte charCode) { }
+    }
+    public interface IBlobCompressor
+    {
+        DataFac.Compression.CompressResult CompressData(System.ReadOnlyMemory<byte> data, System.Span<byte> hashSpan, int maxEmbeddedSize);
+        DataFac.Compression.CompressResult CompressText(string text, System.Span<byte> hashSpan, int maxEmbeddedSize);
+        System.ReadOnlyMemory<byte> Decompress(System.ReadOnlySpan<byte> compressed);
+    }
+    public sealed class SnappyCompressor : DataFac.Compression.IBlobCompressor
+    {
+        public SnappyCompressor() { }
+        public static DataFac.Compression.CompressResult CompressData(System.ReadOnlyMemory<byte> data, System.Span<byte> hashSpan, int maxEmbeddedSize) { }
+        public static DataFac.Compression.CompressResult CompressText(string text, System.Span<byte> hashSpan, int maxEmbeddedSize) { }
+        public static System.ReadOnlyMemory<byte> Decompress(System.ReadOnlySpan<byte> compressed) { }
+    }
+}
