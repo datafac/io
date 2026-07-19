@@ -80,8 +80,10 @@ public class PublicApiRegressionTests
         typeof(BlobCompAlgo).Assembly.GetName().Version?.ToString().ShouldBe("1.1.0.0");
     }
 
+#if NET7_0_OR_GREATER
     [Fact]
-    public async Task CheckPublicApi()
+    public async Task CheckPublicApi_Net70
+    ()
     {
         // act
         var options = new ApiGeneratorOptions()
@@ -93,5 +95,21 @@ public class PublicApiRegressionTests
         // assert
         await Verifier.Verify(currentApi);
     }
+#else
+    [Fact]
+    public async Task CheckPublicApi_Net48()
+    {
+        // act
+        var options = new ApiGeneratorOptions()
+        {
+            IncludeAssemblyAttributes = false
+        };
+        string currentApi = ApiGenerator.GeneratePublicApi(typeof(BlobCompAlgo).Assembly, options);
+
+        // assert
+        await Verifier.Verify(currentApi);
+    }
+#endif
+
 
 }
