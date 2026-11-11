@@ -77,7 +77,7 @@ public class PublicApiRegressionTests
     [Fact]
     public void VersionCheck()
     {
-        typeof(BlobCompAlgo).Assembly.GetName().Version?.ToString().ShouldBe("1.1.0.0");
+        typeof(BlobCompAlgo).Assembly.GetName().Version?.ToString().ShouldBe("1.2.0.0");
     }
 
 #if NET7_0_OR_GREATER

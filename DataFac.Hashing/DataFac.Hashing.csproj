@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>netstandard2.0;net8.0;net10.0</TargetFrameworks>
+		<TargetFrameworks>netstandard2.0;net10.0;net11.0</TargetFrameworks>
 		<LangVersion>latest</LangVersion>
 		<Nullable>enable</Nullable>
 		<WarningsAsErrors>nullable</WarningsAsErrors>
@@ -10,10 +10,10 @@
 		<PackageProjectUrl>https://github.com/datafac/io</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/datafac/io</RepositoryUrl>
 		<Company>DataFac</Company>
-		<Product>DTOMaker</Product>
+		<Product>IO</Product>
 		<Authors>DataFac Contributors</Authors>
-		<Title>DataFac Compression</Title>
-		<Description>Compression interfaces, types and helpers.</Description>
+		<Title>DataFac Hashing</Title>
+		<Description>Hashing interfaces, types and helpers.</Description>
 		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<IncludeSymbols>true</IncludeSymbols>
